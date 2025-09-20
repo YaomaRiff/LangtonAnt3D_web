@@ -178,6 +178,10 @@ let dustFloatIntensity = 0.5;
 let dustBreathIntensity = 0.2;
 let dustPoints = null;
 
+// 音频变量
+let backgroundMusic = null;
+let musicPlaying = false;
+
 const lineGroup = new THREE.Group();
 scene.add(lineGroup);
 let progressLine = null;
@@ -263,6 +267,19 @@ function createDustParticles() {
   dustPoints = new THREE.Points(dustGeometry, dustMaterial);
   scene.add(dustPoints);
 }
+
+function initializeAudio() {
+  backgroundMusic = new Audio('./background-music.mp3');
+  backgroundMusic.loop = true;
+  backgroundMusic.volume = 0.3;
+  
+  // 处理音频加载错误
+  backgroundMusic.addEventListener('error', () => {
+    console.warn('音频文件加载失败，请检查文件路径');
+    updateInfo('音频文件未找到');
+  });
+}
+
 
 // 数据处理
 function findColumnIndex(headers, candidates) {
@@ -579,6 +596,19 @@ function createUI() {
         <button class="control-button" id="playBtn">播放</button>
         <button class="control-button" id="resetBtn">重置</button>
       </div>
+      </div>
+      <div class="control-section">
+        <div class="section-title">音频控制</div>
+        <div class="button-row">
+          <button class="control-button" id="musicToggle">播放音乐</button>
+          <button class="control-button" id="musicRestart">重新播放</button>
+        </div>
+        </div>
+        <div class="control-row">
+          <label>音量:</label>
+          <input type="range" id="volumeSlider" min="0" max="100" value="30">
+          <span id="volumeDisplay">30</span>
+        </div>
     </div>
       <div class="control-row">
         <label>黑边裁剪:</label>
@@ -777,6 +807,43 @@ function setupEvents() {
     }
   });
 
+  // 音乐控制事件
+document.getElementById('musicToggle').addEventListener('click', () => {
+  if (!backgroundMusic) return;
+  
+  if (musicPlaying) {
+    backgroundMusic.pause();
+    document.getElementById('musicToggle').textContent = '播放音乐';
+    musicPlaying = false;
+  } else {
+    backgroundMusic.play().catch(e => {
+      console.warn('音频播放失败:', e);
+      updateInfo('音频播放需要用户交互');
+    });
+    document.getElementById('musicToggle').textContent = '暂停音乐';
+    musicPlaying = true;
+  }
+});
+
+document.getElementById('musicRestart').addEventListener('click', () => {
+  if (!backgroundMusic) return;
+  backgroundMusic.currentTime = 0;
+  if (!musicPlaying) {
+    backgroundMusic.play().catch(e => console.warn('音频播放失败:', e));
+    document.getElementById('musicToggle').textContent = '暂停音乐';
+    musicPlaying = true;
+  }
+});
+
+document.getElementById('volumeSlider').addEventListener('input', (e) => {
+  const volume = parseFloat(e.target.value) / 100;
+  document.getElementById('volumeDisplay').textContent = e.target.value;
+  if (backgroundMusic) {
+    backgroundMusic.volume = volume;
+  }
+});
+
+
   // 初始化配置
   updateSceneFromConfig();
 }
@@ -873,6 +940,7 @@ if (animating && mappedPoints.length > 1) {
 // 初始化应用
 function init() {
   createUI();
+  initializeAudio();
   createDustParticles();
   setupEvents();
   loadCSVData();
