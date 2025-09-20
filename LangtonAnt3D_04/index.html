@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Langton Ant 3D</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- 使用 unpkg CDN，更稳定 -->
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
+        "three/examples/jsm/": "https://unpkg.com/three@0.158.0/examples/jsm/"
+      }
+    }
+    </script>
+</head>
+<body>
+    <div id="loading-status">
+        <div class="loading-header">系统加载状态</div>
+        <div class="status-item">
+            <span>Three.js核心:</span>
+            <div class="status-indicator waiting" id="status-core">等待中</div>
+        </div>
+        <div class="status-item">
+            <span>场景系统:</span>
+            <div class="status-indicator waiting" id="status-scene">等待中</div>
+        </div>
+        <div class="status-item">
+            <span>控制器:</span>
+            <div class="status-indicator waiting" id="status-controls">等待中</div>
+        </div>
+        <div class="status-item">
+            <span>粒子系统:</span>
+            <div class="status-indicator waiting" id="status-particles">等待中</div>
+        </div>
+        <div class="status-item">
+            <span>动画系统:</span>
+            <div class="status-indicator waiting" id="status-animation">等待中</div>
+        </div>
+    </div>
+    
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>

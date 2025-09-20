@@ -1,0 +1,119 @@
+body {
+    margin: 0;
+    background: #000000;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+}
+
+#three-container {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+}
+
+/* 加载状态UI样式 */
+#loading-status {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+    min-width: 250px;
+    z-index: 1000;
+    border: 1px solid #333;
+    transition: opacity 0.3s ease;
+}
+
+.loading-header {
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #3399ff;
+    border-bottom: 1px solid #333;
+    padding-bottom: 5px;
+}
+
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 5px 0;
+    padding: 3px 0;
+}
+
+.status-indicator {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    min-width: 60px;
+    text-align: center;
+}
+
+.status-indicator.loading {
+    background: #ffa500;
+    color: #000;
+}
+
+.status-indicator.success {
+    background: #4CAF50;
+    color: white;
+}
+
+.status-indicator.error {
+    background: #f44336;
+    color: white;
+}
+
+.status-indicator.waiting {
+    background: #666;
+    color: #ccc;
+}
+
+/* 控制面板样式 */
+.control-panel {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    z-index: 10;
+    min-width: 320px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.control-panel button {
+    margin: 2px;
+    padding: 5px 10px;
+    background: #333;
+    color: white;
+    border: 1px solid #555;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.control-panel button:hover {
+    background: #555;
+}
+
+.control-panel input[type="range"] {
+    width: 160px;
+}
+
+.control-panel input[type="color"] {
+    margin-left: 10px;
+}
+
+.control-panel label {
+    display: inline-block;
+    margin-top: 8px;
+}
+
+#loading-status.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
