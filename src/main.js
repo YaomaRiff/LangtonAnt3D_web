@@ -177,7 +177,7 @@ const config = {
   speed: 60,
   pathColor: '#F0B7B7',
   dustColor: '#AF85B7',
-  bgColor: '##171B1C',
+  bgColor: '#171B1C',
   fogDensity: 15,
   fogVolume: 1.0,
   pathFogIntensity: 10,
@@ -245,6 +245,12 @@ function loadConfig() {
 }
 
 function applyConfig() {
+  // 检查关键DOM元素是否存在
+  if (!document.getElementById('speedSlider')) {
+    console.warn('Controls not ready, deferring config apply');
+    return;
+  }
+
   // 应用基础配置
   document.getElementById('speedSlider').value = config.speed;
   document.getElementById('speedDisplay').textContent = config.speed;
@@ -324,9 +330,95 @@ function applyConfig() {
 if (config.currentView && mappedPoints.length > 0) {
   setTimeout(() => {
     switchToView(config.currentView);
-  }, 100);
+  }, 50);
 }
 }
+
+// 在applyConfig函数后面添加这个新函数
+function applyInitialConfig() {
+  // 检查控件是否存在
+  if (!document.getElementById('speedSlider')) {
+    return; // 如果控件还没创建，就直接返回
+  }
+
+  // 更新UI控件的值
+  document.getElementById('speedSlider').value = config.speed;
+  document.getElementById('speedDisplay').textContent = config.speed;
+  
+  document.getElementById('pathColor').value = config.pathColor;
+  document.getElementById('dustColor').value = config.dustColor;
+  document.getElementById('bgColor').value = config.bgColor;
+  
+  document.getElementById('fogSlider').value = config.fogDensity;
+  document.getElementById('fogVolumeSlider').value = config.fogVolume;
+  document.getElementById('fogVolumeDisplay').textContent = config.fogVolume.toFixed(1);
+  
+  document.getElementById('pathFogSlider').value = config.pathFogIntensity;
+  document.getElementById('pathFogDisplay').textContent = config.pathFogIntensity;
+  
+  document.getElementById('dustFloatSlider').value = config.dustFloatIntensity;
+  document.getElementById('dustFloatDisplay').textContent = config.dustFloatIntensity;
+  
+  document.getElementById('dustBreathSlider').value = config.dustBreathIntensity;
+  document.getElementById('dustBreathDisplay').textContent = config.dustBreathIntensity;
+  
+  // 滤镜控件
+  document.getElementById('fisheyeDistortionSlider').value = config.fisheyeDistortion;
+  document.getElementById('fisheyeDistortionDisplay').textContent = config.fisheyeDistortion;
+  
+  document.getElementById('fisheyeDispersionSlider').value = config.fisheyeDispersion;
+  document.getElementById('fisheyeDispersionDisplay').textContent = config.fisheyeDispersion;
+  
+  document.getElementById('crtScanlinesSlider').value = config.crtScanlines;
+  document.getElementById('crtScanlinesDisplay').textContent = config.crtScanlines;
+  
+  document.getElementById('crtVignetteSlider').value = config.crtVignette;
+  document.getElementById('crtVignetteDisplay').textContent = config.crtVignette;
+  
+  document.getElementById('crtNoiseSlider').value = config.crtNoise;
+  document.getElementById('crtNoiseDisplay').textContent = config.crtNoise;
+  
+  document.getElementById('crtCurvatureSlider').value = config.crtCurvature;
+  document.getElementById('crtCurvatureDisplay').textContent = config.crtCurvature;
+  
+  document.getElementById('enableFisheye').checked = config.enableFisheye;
+  document.getElementById('enableCRT').checked = config.enableCRT;
+
+  // 应用到场景
+  const pathC = new THREE.Color(config.pathColor);
+  progressMaterial.uniforms.uColor.value.copy(pathC);
+  markerMaterial.color.copy(pathC);
+  markerMaterial.emissive.copy(pathC);
+  
+  scene.background.set(config.bgColor);
+  scene.fog.color.set(config.bgColor);
+  scene.fog.density = config.fogDensity / 1000;
+  
+  fogVolumeScale = config.fogVolume;
+  progressMaterial.uniforms.uFogIntensity.value = config.pathFogIntensity / 500;
+  dustFloatIntensity = config.dustFloatIntensity / 100;
+  dustBreathIntensity = config.dustBreathIntensity / 100;
+  speedFactor = config.speed * 0.002;
+  
+  // 应用滤镜效果
+  fisheyePass.uniforms.distortion.value = config.fisheyeDistortion / 100;
+  fisheyePass.uniforms.dispersion.value = config.fisheyeDispersion;
+  
+  crtPass.uniforms.scanlineIntensity.value = config.crtScanlines / 100;
+  crtPass.uniforms.vignetteIntensity.value = config.crtVignette / 100;
+  crtPass.uniforms.noiseIntensity.value = config.crtNoise / 100;
+  crtPass.uniforms.curvature.value = config.crtCurvature / 100;
+  
+  fisheyePass.enabled = config.enableFisheye;
+  crtPass.enabled = config.enableCRT;
+  
+  if (dustPoints) dustPoints.material.color.set(config.dustColor);
+  updateDustVolume();
+  
+  currentView = config.currentView;
+}
+
+
 
 // -------------------- UI 控件（扩展） --------------------
 function createControls() {
@@ -347,110 +439,111 @@ function createControls() {
 
   controlPanel.innerHTML = `
     <div id="info">等待加载数据...</div>
-    <br>
-    <button id="playBtn">播放</button>
-    <button id="pauseBtn">暂停</button>
-    <button id="resetBtn">重置</button>
-    <button id="saveBtn" style="margin-left:10px;">保存配置</button>
-    <br><br>
+<br>
+<button id="playBtn">播放</button>
+<button id="pauseBtn">暂停</button>
+<button id="resetBtn">重置</button>
+<button id="saveBtn" style="margin-left:10px;">保存配置</button>
+<br><br>
 
-    <!-- 视图控制 -->
-    <div style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
-      <strong>视图控制</strong><br>
-      <div style="margin: 5px 0;">
-        当前: <span id="currentViewDisplay">透视视图</span>
-      </div>
-      <div style="display: flex; flex-wrap: wrap; gap: 5px; margin: 5px 0;">
-        <button id="perspectiveViewBtn" style="padding: 4px 8px; font-size: 11px;">透视</button>
-        <button id="orthographicViewBtn" style="padding: 4px 8px; font-size: 11px;">正交</button>
-        <button id="frontViewBtn" style="padding: 4px 8px; font-size: 11px;">前视图</button>
-        <button id="leftViewBtn" style="padding: 4px 8px; font-size: 11px;">左视图</button>
-        <button id="topViewBtn" style="padding: 4px 8px; font-size: 11px;">顶视图</button>
-        <button id="flipViewBtn" style="padding: 4px 8px; font-size: 11px;">翻转</button>
-      </div>
-      <div style="margin: 5px 0; font-size: 11px; color: #aaa;">
-        提示: 中键拖拽平移视角
-      </div>
-    </div>
-    
-    <!-- 动画控制 -->
-    <div style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
-      <strong>动画控制</strong><br>
-      <label>进度: </label>
-      <input type="range" id="stepSlider" min="0" max="0" value="0" style="width: 200px;">
-      <span id="stepDisplay">0/0</span><br>
-      <label>速度: </label>
-      <input type="range" id="speedSlider" min="1" max="60" value="15" style="width: 160px;">
-      <span id="speedDisplay">15</span>
-    </div>
-    
-    <!-- 颜色控制 -->
-    <div style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
-      <strong>颜色设置</strong><br>
-      <label>路径+光点颜色:</label>
-      <input type="color" id="pathColor" value="#3399ff"><br>
-      <label>背景粒子颜色:</label>
-      <input type="color" id="dustColor" value="#88aaff"><br>
-      <label>背景颜色:</label>
-      <input type="color" id="bgColor" value="#000011">
-    </div>
-    
-    <!-- 雾效控制 -->
-    <div style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
-      <strong>雾效设置</strong><br>
-      <label>雾密度: </label>
-      <input type="range" id="fogSlider" min="5" max="50" value="${Math.round(scene.fog.density * 1000)}" style="width: 160px;"><br>
-      <label>雾体积大小: </label>
-      <input type="range" id="fogVolumeSlider" min="0.5" max="3.0" step="0.1" value="1.0" style="width: 160px;">
-      <span id="fogVolumeDisplay">1.0</span><br>
-      <label>路径雾化强度: </label>
-      <input type="range" id="pathFogSlider" min="0" max="200" value="80" style="width: 160px;">
-      <span id="pathFogDisplay">80</span>
-    </div>
-    
-    <!-- 粒子控制 -->
-    <div style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
-      <strong>粒子效果</strong><br>
-      <label>粒子浮动强度: </label>
-      <input type="range" id="dustFloatSlider" min="0" max="100" value="50" style="width: 160px;">
-      <span id="dustFloatDisplay">50</span><br>
-      <label>粒子呼吸强度: </label>
-      <input type="range" id="dustBreathSlider" min="0" max="100" value="20" style="width: 160px;">
-      <span id="dustBreathDisplay">20</span>
-    </div>
-    
-    <!-- 鱼眼滤镜 -->
-    <div style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
-      <strong>鱼眼滤镜</strong><br>
-      <label><input type="checkbox" id="enableFisheye" checked> 启用鱼眼效果</label><br>
-      <label>畸变强度: </label>
-      <input type="range" id="fisheyeDistortionSlider" min="0" max="100" value="30" style="width: 160px;">
-      <span id="fisheyeDistortionDisplay">30</span><br>
-      <label>色散强度: </label>
-      <input type="range" id="fisheyeDispersionSlider" min="0" max="50" value="0" style="width: 160px;">
-      <span id="fisheyeDispersionDisplay">0</span>
-    </div>
-    
-    <!-- CRT滤镜 -->
-    <div style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
-      <strong>CRT复古滤镜</strong><br>
-      <label><input type="checkbox" id="enableCRT" checked> 启用CRT效果</label><br>
-      <label>扫描线强度: </label>
-      <input type="range" id="crtScanlinesSlider" min="0" max="100" value="80" style="width: 160px;">
-      <span id="crtScanlinesDisplay">80</span><br>
-      <label>暗角强度: </label>
-      <input type="range" id="crtVignetteSlider" min="0" max="100" value="30" style="width: 160px;">
-      <span id="crtVignetteDisplay">30</span><br>
-      <label>噪点强度: </label>
-      <input type="range" id="crtNoiseSlider" min="0" max="50" value="10" style="width: 160px;">
-      <span id="crtNoiseDisplay">10</span><br>
-      <label>屏幕弯曲: </label>
-      <input type="range" id="crtCurvatureSlider" min="0" max="50" value="10" style="width: 160px;">
-      <span id="crtCurvatureDisplay">10</span>
-    </div>
-    
-    <!-- 文件加载 -->
-    <input type="file" id="csvFile" accept=".csv" style="margin-top: 6px;">
+<!-- 视图控制 -->
+<div style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
+  <strong>视图控制</strong><br>
+  <div style="margin: 5px 0;">
+    当前: <span id="currentViewDisplay">透视视图</span>
+  </div>
+  <div style="display: flex; flex-wrap: wrap; gap: 5px; margin: 5px 0;">
+    <button id="perspectiveViewBtn" style="padding: 4px 8px; font-size: 11px;">透视</button>
+    <button id="orthographicViewBtn" style="padding: 4px 8px; font-size: 11px;">正交</button>
+    <button id="frontViewBtn" style="padding: 4px 8px; font-size: 11px;">前视图</button>
+    <button id="leftViewBtn" style="padding: 4px 8px; font-size: 11px;">左视图</button>
+    <button id="topViewBtn" style="padding: 4px 8px; font-size: 11px;">顶视图</button>
+    <button id="flipViewBtn" style="padding: 4px 8px; font-size: 11px;">翻转</button>
+  </div>
+  <div style="margin: 5px 0; font-size: 11px; color: #aaa;">
+    提示: 中键拖拽平移视角
+  </div>
+</div>
+
+<!-- 动画控制 -->
+<div style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
+  <strong>动画控制</strong><br>
+  <label>进度: </label>
+  <input type="range" id="stepSlider" min="0" max="0" value="0" style="width: 200px;">
+  <span id="stepDisplay">0/0</span><br>
+  <label>速度: </label>
+  <input type="range" id="speedSlider" min="1" max="60" value="60" style="width: 160px;">
+  <span id="speedDisplay">60</span>
+</div>
+
+<!-- 颜色控制 -->
+<div style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
+  <strong>颜色设置</strong><br>
+  <label>路径+光点颜色:</label>
+  <input type="color" id="pathColor" value="#F0B7B7"><br>
+  <label>背景粒子颜色:</label>
+  <input type="color" id="dustColor" value="#AF85B7"><br>
+  <label>背景颜色:</label>
+  <input type="color" id="bgColor" value="#171B1C">
+</div>
+
+<!-- 雾效控制 -->
+<div style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
+  <strong>雾效设置</strong><br>
+  <label>雾密度: </label>
+  <input type="range" id="fogSlider" min="5" max="50" value="15" style="width: 160px;"><br>
+  <label>雾体积大小: </label>
+  <input type="range" id="fogVolumeSlider" min="0.5" max="3.0" step="0.1" value="1.0" style="width: 160px;">
+  <span id="fogVolumeDisplay">1.0</span><br>
+  <label>路径雾化强度: </label>
+  <input type="range" id="pathFogSlider" min="0" max="200" value="10" style="width: 160px;">
+  <span id="pathFogDisplay">10</span>
+</div>
+
+<!-- 粒子控制 -->
+<div style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
+  <strong>粒子效果</strong><br>
+  <label>粒子浮动强度: </label>
+  <input type="range" id="dustFloatSlider" min="0" max="100" value="50" style="width: 160px;">
+  <span id="dustFloatDisplay">50</span><br>
+  <label>粒子呼吸强度: </label>
+  <input type="range" id="dustBreathSlider" min="0" max="100" value="20" style="width: 160px;">
+  <span id="dustBreathDisplay">20</span>
+</div>
+
+<!-- 鱼眼滤镜 -->
+<div style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
+  <strong>鱼眼滤镜</strong><br>
+  <label><input type="checkbox" id="enableFisheye" checked> 启用鱼眼效果</label><br>
+  <label>畸变强度: </label>
+  <input type="range" id="fisheyeDistortionSlider" min="0" max="100" value="100" style="width: 160px;">
+  <span id="fisheyeDistortionDisplay">100</span><br>
+  <label>色散强度: </label>
+  <input type="range" id="fisheyeDispersionSlider" min="0" max="50" value="33" style="width: 160px;">
+  <span id="fisheyeDispersionDisplay">33</span>
+</div>
+
+<!-- CRT滤镜 -->
+<div style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
+  <strong>CRT复古滤镜</strong><br>
+  <label><input type="checkbox" id="enableCRT" checked> 启用CRT效果</label><br>
+  <label>扫描线强度: </label>
+  <input type="range" id="crtScanlinesSlider" min="0" max="100" value="73" style="width: 160px;">
+  <span id="crtScanlinesDisplay">73</span><br>
+  <label>暗角强度: </label>
+  <input type="range" id="crtVignetteSlider" min="0" max="100" value="92" style="width: 160px;">
+  <span id="crtVignetteDisplay">92</span><br>
+  <label>噪点强度: </label>
+  <input type="range" id="crtNoiseSlider" min="0" max="50" value="11" style="width: 160px;">
+  <span id="crtNoiseDisplay">11</span><br>
+  <label>屏幕弯曲: </label>
+  <input type="range" id="crtCurvatureSlider" min="0" max="50" value="50" style="width: 160px;">
+  <span id="crtCurvatureDisplay">50</span>
+</div>
+
+<!-- 文件加载 -->
+<input type="file" id="csvFile" accept=".csv" style="margin-top: 6px;">
+
   `;
 
   document.body.appendChild(controlPanel);
@@ -574,29 +667,33 @@ function createControls() {
   });
 
   // 视图控制事件
-document.getElementById('perspectiveViewBtn').addEventListener('click', () => {
-  switchToView('perspective');
-});
+  document.getElementById('perspectiveViewBtn').addEventListener('click', () => {
+    switchToView('perspective');
+  });
 
-document.getElementById('orthographicViewBtn').addEventListener('click', () => {
-  switchToView('orthographic');
-});
+  document.getElementById('orthographicViewBtn').addEventListener('click', () => {
+    switchToView('orthographic');
+  });
 
-document.getElementById('frontViewBtn').addEventListener('click', () => {
-  switchToView('front');
-});
+  document.getElementById('frontViewBtn').addEventListener('click', () => {
+    switchToView('front');
+  });
 
-document.getElementById('leftViewBtn').addEventListener('click', () => {
-  switchToView('left');
-});
+  document.getElementById('leftViewBtn').addEventListener('click', () => {
+    switchToView('left');
+  });
 
-document.getElementById('topViewBtn').addEventListener('click', () => {
-  switchToView('top');
-});
+  document.getElementById('topViewBtn').addEventListener('click', () => {
+    switchToView('top');
+  });
 
-document.getElementById('flipViewBtn').addEventListener('click', () => {
-  switchToView('flip');
-});
+  document.getElementById('flipViewBtn').addEventListener('click', () => {
+    switchToView('flip');
+  });
+
+  setTimeout(() => {
+    loadConfig();
+  }, 100);
 
   // 文件加载事件
   document.getElementById('csvFile').addEventListener('change', (e) => {
@@ -954,7 +1051,7 @@ function createDustParticles(options = {}) {
     transparent: true,
     opacity: 0.2,
     sizeAttenuation: true,
-    color: 0x88aaff
+    color: config.dustColor
   });
 
   dustPoints = new THREE.Points(geometry, material);
@@ -1129,9 +1226,20 @@ function animate() {
 }
 
 // -------------------- 初始化启动 --------------------
-//loadConfig();
-createControls(); // 创建控件
+createControls(); // 先创建控件
+
+// 延迟应用配置，确保DOM元素已经创建
+setTimeout(() => {
+  applyInitialConfig(); // 应用初始配置
+}, 50);
+
 loadCSVData();
 animate();
+
+// 然后再尝试加载保存的配置覆盖初始值
+setTimeout(() => {
+  loadConfig();
+}, 200);
+
 
 //:)
