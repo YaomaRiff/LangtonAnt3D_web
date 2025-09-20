@@ -26,7 +26,7 @@ scene.background = new THREE.Color(0x000000);
 // ------ 体积雾（加厚底部） ------
 scene.fog = new THREE.FogExp2(0x111122, 0.015);
 
-const camera = new THREE.PerspectiveCamera(
+let camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   0.1,
@@ -1129,7 +1129,8 @@ function animate() {
 }
 
 // -------------------- 初始化启动 --------------------
-loadConfig();
+//loadConfig();
+createControls(); // 创建控件
 loadCSVData();
 animate();
 
