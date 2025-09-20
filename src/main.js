@@ -174,22 +174,22 @@ let dustBreathIntensity = 0.2;
 
 // 配置对象（添加滤镜参数）
 const config = {
-  speed: 15,
-  pathColor: '#3399ff',
-  dustColor: '#88aaff',
-  bgColor: '#000011',
+  speed: 60,
+  pathColor: '#F0B7B7',
+  dustColor: '#AF85B7',
+  bgColor: '##171B1C',
   fogDensity: 15,
   fogVolume: 1.0,
-  pathFogIntensity: 80,
+  pathFogIntensity: 10,
   dustFloatIntensity: 50,
   dustBreathIntensity: 20,
   // 新增滤镜参数
-  fisheyeDistortion: 30,
-  fisheyeDispersion: 0,
-  crtScanlines: 80,
-  crtVignette: 30,
-  crtNoise: 10,
-  crtCurvature: 10,
+  fisheyeDistortion: 100,
+  fisheyeDispersion: 33,
+  crtScanlines: 73,
+  crtVignette: 92,
+  crtNoise: 11,
+  crtCurvature: 50,
   enableFisheye: true,
   enableCRT: true,
   currentView: 'perspective'
